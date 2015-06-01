@@ -20,22 +20,6 @@ function MenuScene:onExit()
 end
 
 function MenuScene:addBackgroundSprite()
-	-- Sprite* menuSpriteLogo= Sprite::create(MENU_LOGO);
-	-- menuSpriteLogo->setPosition(ccp(visibleSize.width/2,visibleSize.height));
-	-- menuSpriteLogo->setAnchorPoint(ccp(0.5,1));
-	-- menuSpriteLogo->setScale(0.6f);
-	-- addChild(menuSpriteLogo);
-
-	-- Sprite* rainBowSprite= Sprite::create(RAINBOW);
-	-- rainBowSprite->setPosition(ccp(5,visibleSize.height-20));
-	-- rainBowSprite->setAnchorPoint(ccp(0,1));
-	-- rainBowSprite->setScale(0.3f);
-	-- addChild(rainBowSprite);
-
-	-- MoveBy* rainBowMove = MoveBy::create(1,ccp(8,0));
-	-- MoveBy* rainBowMoveReverse = rainBowMove->reverse();
-	-- Sequence* rainBowAction = Sequence::create(rainBowMove,rainBowMoveReverse,NULL);
-	-- rainBowSprite->runAction(RepeatForever::create(rainBowAction));
 	local menuSpriteLogo = display.newSprite(MENU_LOGO,CONFIG_SCREEN_WIDTH/2,CONFIG_SCREEN_HEIGHT)
 	menuSpriteLogo:setAnchorPoint(0.5,1)
 	menuSpriteLogo:setScale(0.6)
@@ -50,23 +34,9 @@ function MenuScene:addBackgroundSprite()
 	local rainBowMoveReverse = rainBowMove:reverse()
 	local rainBowAction = cc.Sequence:create(rainBowMove,rainBowMoveReverse,NULL)
 	rainBowSprite:runAction(cc.RepeatForever:create(rainBowAction))
-
 end
 
 function MenuScene:addMenuSprite()
-	-- Scale9Sprite* btnNormal = Scale9Sprite::create(NORMAL_MENU);
-	-- Scale9Sprite* btnPress = Scale9Sprite::create(PRESS_MENU);
-
-	-- LabelTTF* singleGameTTF = LabelTTF::create(LanguageString::getInstance()->getLanguageString(SINGLE_GAME)->getCString() ,FONT_MENU,Btn_FontSize);
-	-- ControlButton* singleGameBtn = ControlButton::create(singleGameTTF,btnNormal);
-	-- singleGameBtn->setBackgroundSpriteForState(btnPress, Control::State::SELECTED);
-
-	-- singleGameBtn->setPosition(ccp(visibleSize.width/2,visibleSize.height-180));
-	-- singleGameBtn->setPreferredSize(Size(Btn_Width,Btn_Height));
-	-- singleGameBtn->addTargetWithActionForControlEvents(this,cccontrol_selector(MenuScene::menuTouchDown),Control::EventType::TOUCH_DOWN);
-	-- singleGameBtn->setTag(Btn_Single_Game_TAG);
-	-- addChild(singleGameBtn);
-
 	local btnNormal = ccui.Scale9Sprite:create(NORMAL_MENU)
 	local btnPress = ccui.Scale9Sprite:create(PRESS_MENU)
 

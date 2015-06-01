@@ -1,3 +1,5 @@
+local BeachScene = import("app.scenes.GameScene.BeachScene")
+
 local MapChooseScene = class("MapChooseScene", function()
 	return display.newScene("MapChooseScene")
 end)
@@ -67,6 +69,7 @@ function MapChooseScene:touchListener(event)
 	dump(event, "event:")
     if event.name == "clicked" then
         print(event.name)
+        display.replaceScene(BeachScene.new("BeachScene"))
     end
 end
 
