@@ -8,27 +8,6 @@ function MapChooseScene:ctor()
 end
 
 function MapChooseScene:onEnter()
-    -- local sp2 = display.newScale9Sprite(BEACH_ITEM)
-    -- sp2:setContentSize(300, 200)
-    -- sp2:pos(720, 150)
-
-    -- local sp3 = display.newScale9Sprite(SEA_ITEM)
-    -- sp3:setContentSize(300, 200)
-    -- sp3:pos(920, 150)
-
-    -- local emptyNode = cc.Node:create()
-    -- emptyNode:addChild(sp2)
-    -- emptyNode:addChild(sp3)
-
-    -- local bound = sp2:getBoundingBox()
-    -- bound.width = 300
-    -- bound.height = 200
-
-    -- cc.ui.UIScrollView.new({viewRect = bound})
-    --     :addScrollNode(emptyNode)
-    --     :setDirection(cc.ui.UIScrollView.DIRECTION_HORIZONTAL)
-    --     -- :onScroll(handler(self, self.scrollListener))
-    --     :addTo(self)
     self:AddBackGround()
     self:AddCScrollView()
 

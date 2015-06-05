@@ -1,4 +1,5 @@
 local GameBaseScene = import("app.scenes.GameScene.GameBaseScene")
+local RicherPlayer = import("app.RicherPlayer")
 
 local BeachScene = class("BeachScene",GameBaseScene)
 
@@ -10,7 +11,7 @@ function BeachScene:onEnter()
 	self.name = "BeachScene"
 	BeachScene.super.onEnter(self)
 end
-
+ 
 function BeachScene:onExit()
 end
 
