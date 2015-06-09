@@ -44,9 +44,21 @@ local skillSpriteCardHeight = 100;
 local Quit_OK_TAG = 801;
 local Quit_Cancel_TAG = 802;
 
+local players = {}
+local canPassGrid = {}
+
+function GameBaseScene:getPlayers()
+	return players
+end
+
+function GameBaseScene:getcanPassGrid()
+	return canPassGrid
+end
+
 function GameBaseScene:ctor()
+	cc(self):addComponent("components.behavior.EventProtocol"):exportMethods()
+	self:addNotificationObserver()
 	self.wayLayerPass_vector = {}
-	self.players = {}
 	self:addMap()
 	self:setWayPassToGrid()
 	self:drawTable(2)
@@ -70,7 +82,7 @@ function GameBaseScene:drawTable(playerNumber)
 end
 
 function GameBaseScene:addPlayer()
-	local player = RicherPlayer.new(
+	local player1 = RicherPlayer.new(
 	{
 		name = "player1",
 		tag = 1,
@@ -86,12 +98,34 @@ function GameBaseScene:addPlayer()
 	local x = self.wayLayerPass_vector[randNum].x
 	local y = self.wayLayerPass_vector[randNum].y
 	print("x = " .. x .. " y = " .. y)
-	player:setAnchorPoint(0,0.5)
-	player:setPosition(x, y + TILEDHEIGHT)
-	player:setName("player1")
-	self:addChild(player)
-	self.players[#self.players+1] = player
+	player1:setAnchorPoint(0,0.5)
+	player1:setPosition(x, y + TILEDHEIGHT)
+	player1:setName("player1")
+	self:addChild(player1)
+	players[#players+1] = player1
 
+
+	local player2 = RicherPlayer.new(
+	{
+		name = "player2",
+		tag = 2,
+		enemy = 100,
+		money = 100,
+		strength = 100,
+		turn = true
+	})
+	
+	math.newrandomseed()
+	local randNum = math.random(#self.wayLayerPass_vector)
+	print(randNum)
+	local x = self.wayLayerPass_vector[randNum].x
+	local y = self.wayLayerPass_vector[randNum].y
+	print("x = " .. x .. " y = " .. y)
+	player2:setAnchorPoint(0,0.5)
+	player2:setPosition(x, y + TILEDHEIGHT)
+	player2:setName("player2")
+	self:addChild(player2)
+	players[#players+1] = player2
 
 end
 
@@ -101,11 +135,11 @@ function GameBaseScene:setWayPassToGrid()
  	-- print(mapSize.width .. mapSize.height)
  	-- print(wayLayer)
 
- 	self.canPassGrid = {}
+ 	
  	for i=1,mapSize.height do
- 		self.canPassGrid[i] = {}
+ 		canPassGrid[i] = {}
  		for j=1,mapSize.width do
- 			self.canPassGrid[i][j] = 0
+ 			canPassGrid[i][j] = 0
  		end
  	end
 
@@ -118,7 +152,7 @@ function GameBaseScene:setWayPassToGrid()
                 local col = math.floor(x/TILEDWIDTH);  
                 local row = math.floor(y/TILEDHEIGHT);  
                 -- print(row .. "  " .. col)
-                self.canPassGrid[row][col] = true;
+                canPassGrid[row][col] = true;
                 self.wayLayerPass_vector[#self.wayLayerPass_vector+1] = {x = x,y = y} 
             end 
  		end
@@ -140,11 +174,20 @@ function GameBaseScene:addGoButton()
 end
 
 function GameBaseScene:goButtonCallback()
-  local player = self:getChildByName("player1") 
-  math.newrandomseed()
-  local stepsCount = math.random(6)
-  local path = RouteNavigation:getPath(player, stepsCount, self.canPassGrid, 22, 22)
-  player:startGo(path)
+	local player = self:getChildByName("player1") 
+	math.newrandomseed()
+	local stepsCount = math.random(6)
+	local path = RouteNavigation:getPath(player, stepsCount, canPassGrid, 22, 22)
+	player:startGo(path) 
+	self:dispatchEvent({name = "MSG_GO"})
+end
+
+function GameBaseScene:addNotificationObserver()
+	self:addEventListener("MSG_GO",handler(self,self.receivedMsgForGo) ,{value = 0})
+end
+
+function GameBaseScene:receivedMsgForGo(tag)
+	print("tag : " .. tag.value)
 end
 
 return GameBaseScene

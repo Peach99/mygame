@@ -1,5 +1,3 @@
-local RicherGameController = import("app.RicherGameController")
-
 local RicherPlayer = class("RicherPlayer", function(params)
 	-- char* name, int tag,bool enemy,int money=200000,int strength=100
 	return display.newSprite()

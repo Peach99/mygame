@@ -1,8 +1,19 @@
-local RicherGameController = class("RicherGameController", function()
+local GameBaseScene = import("app.scenes.GameScene.GameBaseScene")
+
+local RouteNavigation = import("app.RouteNavigation")
+
+-- local instance = nil
+
+RicherGameController = class("RicherGameController", function()
 	return {}
 end)
 
 function RicherGameController:ctor()
+	-- local eventDispatcher = cc.Director:getInstance():getEventDispatcher()
+ --    local customListenerBg = cc.EventListenerCustom:create("goButtonCallback",
+ --                                handler(self, self.startRealGo))
+ --    eventDispatcher:addEventListenerWithFixedPriority(customListenerBg, 1)
+	-- print("RicherGameController:ctor()")
 end
 
 function RicherGameController:startRealGo(path,player)
@@ -38,22 +49,42 @@ function RicherGameController:moveOneStep(player)
 		return
 	end
 
-	local callEndGoFunc = cc.CallFunc:create(function()
+	self.callEndGoFunc = cc.CallFunc:create(function()
+		print(self.player.name)
 		self.stepHasGone = self.stepHasGone + 1
 		if self.stepHasGone >= #self.currentPath then
+			self.player.isMyTurn = false
+			self:pickOnePlayerToGo()
 			return
 		end
 		self:moveOneStep()
 	end)
 
-	local actions = cc.Sequence:create(cc.Spawn:create(moveBy,repeate),callEndGoFunc,null)
+	local actions = cc.Sequence:create(cc.Spawn:create(moveBy,repeate),self.callEndGoFunc,null)
 	self.player:runAction(actions)
 end
 
 function RicherGameController:pickOnePlayerToGo()
-	
+	local players = GameBaseScene:getPlayers()
+	for i=1,#players do
+		if players[i].isMyTurn == true then
+			math.newrandomseed()
+			local stepsCount = math.random(6)
+			local path = RouteNavigation:getPath(players[i], 5, GameBaseScene:getcanPassGrid(), 22, 22)
+			players[i]:startGo(path)
+			print("pickOnePlayerToGo")
+			return
+		end
+	end
+
+	for i=1,#players do
+		players[i].isMyTurn = true
+	end
+
 end
 
+function RicherGameController:registerNotificationObserver()
 
+end
 
 return RicherGameController
