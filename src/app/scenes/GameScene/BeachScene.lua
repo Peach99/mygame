@@ -5,6 +5,8 @@ local BeachScene = class("BeachScene",GameBaseScene)
 
 function BeachScene:ctor()
 	BeachScene.super.ctor(self)
+	self.tiledColsCount = 22;
+	self.tiledRowsCount = 22;
 end
 
 function BeachScene:onEnter()

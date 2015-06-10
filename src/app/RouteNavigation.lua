@@ -44,20 +44,18 @@ function RouteNavigation:getPath(player,stepsCount,canPassGrid,gridRowsCount,gri
 		
 		math.newrandomseed()
 		local randNum = math.random(#pathTemp)
-		print("randNum : " .. randNum)
+		-- print("randNum : " .. randNum)
 
 		currentRow = pathTemp[randNum].row
 		currentCol = pathTemp[randNum].col
-
 
 		-- if i > 2 then
 		-- 	canPassGrid_copy[self.path[i-2].row][self.path[i-2].col] = true
 		-- end
 		
-		
-
 		-- print(self.path[i])
 	end
+
 	return self.path
 end
 

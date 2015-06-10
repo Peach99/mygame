@@ -54,7 +54,8 @@ function RicherPlayer:startGo(path)
 	for i=1,#path do
 		print("path : row = " .. path[i].row .. " col =  ".. path[i].col )
 	end
-	RicherGameController:startRealGo(path, self)
+	self:getParent():drawPathColor(path)
+	RicherGameController:shareInstance():startRealGo(path, self)
 end
 
 

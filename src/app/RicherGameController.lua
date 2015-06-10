@@ -2,18 +2,29 @@ local GameBaseScene = import("app.scenes.GameScene.GameBaseScene")
 
 local RouteNavigation = import("app.RouteNavigation")
 
--- local instance = nil
+local instance = nil
 
 RicherGameController = class("RicherGameController", function()
 	return {}
 end)
 
 function RicherGameController:ctor()
+	-- cc(self):addComponent("components.behavior.EventProtocol"):exportMethods()
+	-- self:addEventListener("MSG_GO_SHOW_TAG",handler(GameBaseScene,GameBaseScene.receivedMsgForGo) ,{value = MSG_GO_SHOW_TAG})
 	-- local eventDispatcher = cc.Director:getInstance():getEventDispatcher()
  --    local customListenerBg = cc.EventListenerCustom:create("goButtonCallback",
  --                                handler(self, self.startRealGo))
  --    eventDispatcher:addEventListenerWithFixedPriority(customListenerBg, 1)
 	-- print("RicherGameController:ctor()")
+end
+
+function RicherGameController:shareInstance()
+	if instance == nil then
+		instance = RicherGameController.new()
+	end
+
+	return instance
+
 end
 
 function RicherGameController:startRealGo(path,player)
@@ -24,7 +35,7 @@ function RicherGameController:startRealGo(path,player)
 end
 
 function RicherGameController:moveOneStep(player)
-	print("self.stepHasGone : " .. self.stepHasGone)
+	-- print("self.stepHasGone : " .. self.stepHasGone)
 	-- print("currentPathRow : " .. self.currentPath[self.stepHasGone].row .. " currentPathCol : " .. self.currentPath[self.stepHasGone].col)
 	local nextRow = self.currentPath[self.stepHasGone].row - self.currentPath[self.stepHasGone+1].row
 	local nextCol = self.currentPath[self.stepHasGone].col - self.currentPath[self.stepHasGone+1].col
@@ -33,13 +44,13 @@ function RicherGameController:moveOneStep(player)
 	local moveAnimate = {}
 
 	if nextRow == -1 then
-		moveAnimate = cca.animate(display.getAnimationCache(self.player.name .. "up"))
+		moveAnimate = cca.animate(display.getAnimationCache("player" .. self.player.tag .. "up"))
 	elseif nextRow == 1 then
-		moveAnimate = cca.animate(display.getAnimationCache(self.player.name .. "down"))
+		moveAnimate = cca.animate(display.getAnimationCache("player" .. self.player.tag .. "down"))
 	elseif nextCol == -1 then
-		moveAnimate = cca.animate(display.getAnimationCache(self.player.name .. "right"))
+		moveAnimate = cca.animate(display.getAnimationCache("player" .. self.player.tag .. "right"))
 	elseif nextCol == 1 then
-		moveAnimate = cca.animate(display.getAnimationCache(self.player.name .. "left"))
+		moveAnimate = cca.animate(display.getAnimationCache("player" .. self.player.tag .. "left"))
 	end
 
 	local moveBy = cc.MoveBy:create(0.28, cc.p(-TILEDWIDTH*nextCol, -TILEDHEIGHT*nextRow))
@@ -50,7 +61,9 @@ function RicherGameController:moveOneStep(player)
 	end
 
 	self.callEndGoFunc = cc.CallFunc:create(function()
-		print(self.player.name)
+		-- print(self.player.name)
+		local pathMarks = GameBaseScene:getpathMarks()
+		pathMarks[self.stepHasGone]:setVisible(false)
 		self.stepHasGone = self.stepHasGone + 1
 		if self.stepHasGone >= #self.currentPath then
 			self.player.isMyTurn = false
@@ -72,7 +85,7 @@ function RicherGameController:pickOnePlayerToGo()
 			local stepsCount = math.random(6)
 			local path = RouteNavigation:getPath(players[i], 5, GameBaseScene:getcanPassGrid(), 22, 22)
 			players[i]:startGo(path)
-			print("pickOnePlayerToGo")
+			-- print("pickOnePlayerToGo")
 			return
 		end
 	end
@@ -80,7 +93,9 @@ function RicherGameController:pickOnePlayerToGo()
 	for i=1,#players do
 		players[i].isMyTurn = true
 	end
-
+	-- self:dispatchEvent({name = "MSG_GO_SHOW_TAG"})
+	local event = cc.EventCustom:new("MSG_GO_SHOW_TAG")
+	cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
 end
 
 function RicherGameController:registerNotificationObserver()
