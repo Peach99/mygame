@@ -80,7 +80,7 @@ end
 function GameBaseScene:onEnter()
 	print("GameBaseScene:onEnter")
 	print(self.name)
-	local PopupLayer = PopupLayer:create("hello","hello world",function() print("callback") end)
+	local PopupLayer = PopupLayer:create("hello","hello world",handler(self,self.goButtonCallback) )
 	-- PopupLayer:setTitle("xxx")
 	-- PopupLayer:setContentText("xxx")
 	self:addChild(PopupLayer)
@@ -239,6 +239,7 @@ function GameBaseScene:goButtonCallback()
 	end
 
 	local event = cc.EventCustom:new("MSG_GO_HIDE_TAG")
+	event.value = "event.value"
 	cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
 end
 
@@ -253,6 +254,7 @@ end
 function GameBaseScene:receivedMsgForGo(event)
 	print("receivedMsgForGo ".. event:getEventName() )
 	if event:getEventName() == "MSG_GO_HIDE_TAG" then
+		print(event.value)
 		self:getChildByName("menu"):setVisible(false)
 	elseif event:getEventName() == "MSG_GO_SHOW_TAG" then
 		self:getChildByName("menu"):setVisible(true)

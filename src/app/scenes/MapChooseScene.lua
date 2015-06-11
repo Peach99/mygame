@@ -37,14 +37,17 @@ function MapChooseScene:AddCScrollView()
     local snowSprite = display.newSprite(SNOW_ITEM, display.cx, display.cy)
 
     local item1 = self.pv:newItem()
+    item1.name = "BeachScene"
     item1:addChild(beachSprite)
     self.pv:addItem(item1)    
 
     local item2 = self.pv:newItem()
+    item1.name = "SeaScene"
     item2:addChild(seaSprite)
     self.pv:addItem(item2)  
 
     local item3 = self.pv:newItem()
+    item1.name = "SnowScene"
     item3:addChild(snowSprite)
     self.pv:addItem(item3)      
 
@@ -54,8 +57,11 @@ end
 function MapChooseScene:touchListener(event)
 	dump(event, "event:")
     if event.name == "clicked" then
+        if event.item.name then
+            display.replaceScene(BeachScene.new(event.item.name),"fade")
+        end
         print(event.name)
-        display.replaceScene(BeachScene.new("BeachScene"),"fade")
+        
     end
 end
 
