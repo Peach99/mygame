@@ -9,48 +9,71 @@ local GameBaseScene = class("GameBaseScene", function(name)
 	return display.newScene(name)
 end)
 
-local tableStartPosition_x = 650;
-local tableStartPosition_y = 450;
-local tableWidth = 50;
-local tableHeight = 40;
-local tiledWidth = 32;
-local tiledHeight = 32;
-local FONT_SIZE = 20;
+tableStartPosition_x = 650;
+tableStartPosition_y = 450;
+tableWidth = 50;
+tableHeight = 40;
+tiledWidth = 32;
+tiledHeight = 32;
+FONT_SIZE = 20;
 
-local Dialog_Size_Width = 400;
-local Dialog_Size_Height = 220;
+Dialog_Size_Width = 400;
+Dialog_Size_Height = 220;
 
--- local Btn_OK_TAG = 1;
--- local Btn_Cancel_TAG = 0;
-local stepSkillAnimaTime = 0.1;
+Btn_OK_TAG = 1;
+Btn_Cancel_TAG = 0;
+stepSkillAnimaTime = 0.1;
 
-local goButtonTag = 700;
-local skillButtonTag = 701;
-local skillStormTag = 702;
-local skillStepTag = 703;
-local skillTransferTag = 704;
-local saveButtonTag = 705;
-local audioButtonTag = 706;
-local stepBaseTag = 800;
-local step1_tag = stepBaseTag+1
-local step2_tag = stepBaseTag+2
-local step3_tag = stepBaseTag+3
-local step4_tag = stepBaseTag+4
-local step5_tag = stepBaseTag+5
-local step6_tag = stepBaseTag+6
--- local tiledRowsCount = 0
--- local tiledColsCount = 0
+goButtonTag = 700;
+skillButtonTag = 701;
+skillStormTag = 702;
+skillStepTag = 703;
+skillTransferTag = 704;
+saveButtonTag = 705;
+audioButtonTag = 706;
+stepBaseTag = 800;
+step1_tag = stepBaseTag+1
+step2_tag = stepBaseTag+2
+step3_tag = stepBaseTag+3
+step4_tag = stepBaseTag+4
+step5_tag = stepBaseTag+5
+step6_tag = stepBaseTag+6
+tiledRowsCount = 0
+tiledColsCount = 0
 
+skillSpriteCardWidth = 150
+skillSpriteCardHeight = 100
 
-local skillSpriteCardWidth = 150
-local skillSpriteCardHeight = 100
+Quit_OK_TAG = 801;
+Quit_Cancel_TAG = 802;
 
-local Quit_OK_TAG = 801;
-local Quit_Cancel_TAG = 802;
+map = {}
+players = {}
+canPassGrid = {}
+pathMarks = {}
+wayLayer = {}
+landLayer = {}
 
-local players = {}
-local canPassGrid = {}
-local pathMarks = {}
+blank_land_tiledID   = 0
+strength_30_tiledID  = 0
+strength_50_tiledID  = 0
+strength_80_tiledID  = 0
+
+randomEvent_tiledID  = 0
+lottery_tiledID      = 0
+stock_tiledID        = 0
+
+player2_building_1_tiledID = 0
+player2_building_2_tiledID = 0
+player2_building_3_tiledID = 0
+
+player1_building_1_tiledID = 0
+player1_building_2_tiledID = 0
+player1_building_3_tiledID = 0
+
+map_level = 0
+saveJsonName = 0
+
 
 function GameBaseScene:getPlayers()
 	return players
@@ -65,10 +88,12 @@ function GameBaseScene:getpathMarks()
 end
 
 function GameBaseScene:ctor()
-	self:addNotificationObserver()
+	self:registerNotificationObserver()
 	self.wayLayerPass_vector = {}
 	self:addMap()
+	self:doSomeForParticle()
 	self:setWayPassToGrid()
+	self:initLandLayerFromMap()
 	self:drawTable(2)
 	self:addPathMark()
 	self:addPlayer()
@@ -181,11 +206,12 @@ function GameBaseScene:addPlayer()
 end
 
 function GameBaseScene:setWayPassToGrid()  
- 	local wayLayer = self.map:getLayer("way")
+	print(map.name)
+ 	wayLayer = map:getLayer("way")
+ 	
  	local mapSize = wayLayer:getLayerSize()
  	-- print(mapSize.width .. mapSize.height)
  	-- print(wayLayer)
-
  	
  	for i=1,mapSize.height do
  		canPassGrid[i] = {}
@@ -202,13 +228,18 @@ function GameBaseScene:setWayPassToGrid()
                 local y = sp:getPositionY()
                 local col = math.floor(x/TILEDWIDTH);  
                 local row = math.floor(y/TILEDHEIGHT);  
-                -- print(row .. "  " .. col)
+                -- print(i .. "  " .. j)
                 canPassGrid[row][col] = true;
                 self.wayLayerPass_vector[#self.wayLayerPass_vector+1] = {x = x,y = y} 
             end 
  		end
  	end
  	
+end
+
+function GameBaseScene:initLandLayerFromMap()
+	landLayer = map:getLayer("land")
+	print(landLayer)
 end
 
 function GameBaseScene:addGoButton()
@@ -234,7 +265,7 @@ function GameBaseScene:goButtonCallback()
 	if player then
 		math.newrandomseed()
 		local stepsCount = math.random(6)
-		local path = RouteNavigation:getPath(player, stepsCount, canPassGrid,self.tiledRowsCount, self.tiledColsCount)
+		local path = RouteNavigation:getPath(player, stepsCount, canPassGrid, self.tiledRowsCount, self.tiledColsCount)
 		player:startGo(path) 
 	end
 
@@ -243,24 +274,38 @@ function GameBaseScene:goButtonCallback()
 	cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
 end
 
-function GameBaseScene:addNotificationObserver()
+function GameBaseScene:registerNotificationObserver()
 	local evl = cc.EventListenerCustom:create("MSG_GO_HIDE_TAG", handler(self, self.receivedMsgForGo) )
     cc.Director:getInstance():getEventDispatcher():addEventListenerWithFixedPriority(evl,1)
+
 	evl = cc.EventListenerCustom:create("MSG_GO_SHOW_TAG", handler(self, self.receivedMsgForGo) )
     cc.Director:getInstance():getEventDispatcher():addEventListenerWithFixedPriority(evl,1)
+
+    evl = cc.EventListenerCustom:create("MSG_BUY", handler(self, self.receivedMsgForGo) )
+    cc.Director:getInstance():getEventDispatcher():addEventListenerWithFixedPriority(evl,1)
+
+	-- evl = cc.EventListenerCustom:create("MSG_GO_SHOW_TAG", handler(self, self.receivedMsgForGo) )
+ --    cc.Director:getInstance():getEventDispatcher():addEventListenerWithFixedPriority(evl,1)
 
 end
 
 function GameBaseScene:receivedMsgForGo(event)
 	print("receivedMsgForGo ".. event:getEventName() )
 	if event:getEventName() == "MSG_GO_HIDE_TAG" then
-		print(event.value)
 		self:getChildByName("menu"):setVisible(false)
 	elseif event:getEventName() == "MSG_GO_SHOW_TAG" then
 		self:getChildByName("menu"):setVisible(true)
-	end
-end
+	elseif event:getEventName() == "MSG_BUY" then
+		if event.player.name == "player1" then
+			self:buyLand(event.buyTag, event.x, event.y, self.foot1Sprite, player1_building_1_tiledID, event.player, PLAYER1_1_PARTICLE_PLIST)
+		elseif event.player.name == "player2" then
+			self:buyLand(event.buyTag, event.x, event.y, self.foot2Sprite, player2_building_1_tiledID, event.player, PLAYER1_2_PARTICLE_PLIST)
+		end
 
+	end
+		-- buyLand(MSG_BUY_BLANK_TAG,buy_land_x,buy_land_y,foot1Sprite,player1_building_1_tiledID,player1,PLAYER1_1_PARTICLE_PLIST);
+
+end
 
 function GameBaseScene:drawPathColor(path)
 	for i=2,#path do
@@ -269,6 +314,87 @@ function GameBaseScene:drawPathColor(path)
 		pathMarks[i-1]:setPosition(x, y)
 		pathMarks[i-1]:setVisible(true)
 	end
+end
+-- void GameBaseScene::buyLand(int buyTag,float x,float y ,Sprite* landSprite,int landLevel,RicherPlayer* player ,char* particlelistName)
+-- {
+-- 			int money =0;
+
+-- 	        if(buyTag == MSG_BUY_BLANK_TAG)
+-- 			{
+-- 				money = LAND_BLANK_MONEY;				
+-- 			}
+-- 		   if(buyTag == MSG_BUY_LAND_1_TAG)
+-- 			{
+-- 				money = LAND_LEVEL_1_MONEY;
+-- 			}
+-- 			if(buyTag == MSG_BUY_LAND_2_TAG)
+-- 			{
+-- 				money = LAND_LEVEL_2_MONEY;
+-- 			}
+
+
+
+function GameBaseScene:doSomeForParticle()
+	self.landFadeOut = cc.FadeOut:create(0.1) 
+	self.landFadeIn = cc.FadeOut:create(0.1) 
+
+	self.scaleby1ForBuyLand = cc.ScaleBy:create(0.1, 1.5)
+	self.scaleby2ForBuyLand = cc.ScaleBy:create(0.5, 0.7) 
+
+	self.foot1Sprite = display.newSprite(PLAYER1_1_PARTICLE_PNG)
+	self:addChild(self.foot1Sprite)
+	self.foot1Sprite:setAnchorPoint(0,0)
+
+	self.foot2Sprite = display.newSprite(PLAYER2_1_PARTICLE_PNG)
+	self:addChild(self.foot2Sprite)
+	self.foot2Sprite:setAnchorPoint(0,0)
+
+	self.starFish1Sprite = display.newSprite(PLAYER1_2_PARTICLE_PNG)
+	self:addChild(self.starFish1Sprite)
+	self.starFish1Sprite:setAnchorPoint(0,0)
+
+	self.starFish2Sprite = display.newSprite(PLAYER2_2_PARTICLE_PNG)
+	self:addChild(self.starFish2Sprite)
+	self.starFish2Sprite:setAnchorPoint(0,0)
+
+	self.heart1Sprite = display.newSprite(PLAYER1_3_PARTICLE_PNG)
+	self:addChild(self.heart1Sprite)
+	self.heart1Sprite:setAnchorPoint(0,0)
+
+	self.heart2Sprite = display.newSprite(PLAYER2_3_PARTICLE_PNG)
+	self:addChild(self.heart2Sprite)
+	self.heart2Sprite:setAnchorPoint(0,0)
+end
+
+function GameBaseScene:buyLand(buyTag, x, y, landSprite, landlevel, player, particlelistName)
+	local money = 0
+
+	if buyTag == MSG_BUY_BLANK_TAG then
+		money = LAND_BLANK_MONEY
+	elseif buyTag == MSG_BUY_LAND_1_TAG then
+		money = LAND_LEVEL_1_MONEY
+	elseif buyTag == MSG_BUY_LAND_2_TAG then
+		money = LAND_LEVEL_2_MONEY
+	end
+-- 			Point pointOfGL = Util::map2GL(ccp(x,y),GameBaseScene::_map);
+					
+-- 			landSprite->setVisible(true);
+-- 			landSprite->setPosition(pointOfGL);
+-- 			Point pointOfMap = ccp(x,y);
+-- 			landSprite->runAction(Sequence::create(scaleby1ForBuyLand, scaleby2ForBuyLand,CallFunc::create([this,pointOfMap,pointOfGL,landSprite,landLevel,x,y,player,money,particlelistName]()
+-- 				{
+-- 					playParticle(pointOfGL,particlelistName);
+-- 					landSprite->setVisible(false);
+-- 					landLayer->setTileGID(landLevel,ccp(x,y));
+-- 					refreshMoneyLabel(player,-money);				
+-- 				}),NULL));
+	
+
+	landSprite:setVisible(true)
+	landSprite:setPosition(x, y)
+	
+
+
 end
 
 return GameBaseScene

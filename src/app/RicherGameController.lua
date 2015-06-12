@@ -60,21 +60,61 @@ function RicherGameController:moveOneStep(player)
 		return
 	end
 
-	self.callEndGoFunc = cc.CallFunc:create(function()
-		-- print(self.player.name)
-		local pathMarks = GameBaseScene:getpathMarks()
-		pathMarks[self.stepHasGone]:setVisible(false)
-		self.stepHasGone = self.stepHasGone + 1
-		if self.stepHasGone >= #self.currentPath then
-			self.player.isMyTurn = false
-			self:pickOnePlayerToGo()
-			return
-		end
-		self:moveOneStep()
-	end)
+	self.callEndGoFunc = cc.CallFunc:create(handler(self, self.endGo))
 
 	local actions = cc.Sequence:create(cc.Spawn:create(moveBy,repeate),self.callEndGoFunc,null)
 	self.player:runAction(actions)
+end
+
+function RicherGameController:endGo()
+	-- print(self.player.name)
+	local pathMarks = GameBaseScene:getpathMarks()
+	pathMarks[self.stepHasGone]:setVisible(false)
+	self.stepHasGone = self.stepHasGone + 1
+	if self.stepHasGone >= #self.currentPath then
+		print(GameBaseScene.name)
+		self.player.isMyTurn = false
+		self:handlePropEvent()
+		self:pickOnePlayerToGo()
+		return
+	end
+	self:moveOneStep()
+end
+
+function RicherGameController:handlePropEvent()
+	local col = self.currentPath[self.stepHasGone].col
+	local row = self.currentPath[self.stepHasGone].row
+	local mapSize = landLayer:getLayerSize()
+	print("mapSize " .. mapSize.width .. " ".. mapSize.height)
+	row = mapSize.height-1 - row
+	print("position " .. col .. " ".. row)
+	
+	local positionAroundEnd = {}
+	positionAroundEnd[1] = {col = col, row = row - 1} --up
+	positionAroundEnd[2] = {col = col, row = row + 1} --down
+	positionAroundEnd[3] = {col = col - 1, row = row} --left
+	positionAroundEnd[4] = {col = col + 1, row = row} --right
+
+	for i=1,4 do
+		local sp = landLayer:getTileGIDAt(cc.p(positionAroundEnd[i].col, positionAroundEnd[i].row)) 
+		if sp == 1 then
+			sp = landLayer:getTileAt(cc.p(positionAroundEnd[i].col, positionAroundEnd[i].row))
+			print("landLayer:getTileGIDAt: " .. positionAroundEnd[i].col .." ".. positionAroundEnd[i].row)
+
+			local event = cc.EventCustom:new("MSG_BUY")
+			event.buyTag = MSG_BUY_BLANK_TAG
+			event.x = sp:getPositionX()
+			event.y = sp:getPositionY()
+			event.player = self.player
+
+			cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
+
+
+
+
+		end
+	end
+
 end
 
 function RicherGameController:pickOnePlayerToGo()
