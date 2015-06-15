@@ -108,8 +108,22 @@ function RicherGameController:handlePropEvent()
 			event.player = self.player
 
 			cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
+			return
 		end
 	end
+
+	for i=1,#GameBaseScene:getPlayers() do
+		if players[i].isMyTurn == true then
+			self:pickOnePlayerToGo()
+			return
+		end
+	end
+
+	for i=1,#players do
+		players[i].isMyTurn = true
+	end
+	local event = cc.EventCustom:new("MSG_GO_SHOW_TAG")
+	cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
 
 end
 
