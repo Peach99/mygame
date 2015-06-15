@@ -265,7 +265,7 @@ function GameBaseScene:goButtonCallback()
 	if player then
 		math.newrandomseed()
 		local stepsCount = math.random(6)
-		local path = RouteNavigation:getPath(player, stepsCount, canPassGrid, self.tiledRowsCount, self.tiledColsCount)
+		local path = RouteNavigation:getPath(player, 2, canPassGrid, self.tiledRowsCount, self.tiledColsCount)
 		player:startGo(path) 
 	end
 
@@ -297,9 +297,11 @@ function GameBaseScene:receivedMsgForGo(event)
 		self:getChildByName("menu"):setVisible(true)
 	elseif event:getEventName() == "MSG_BUY" then
 		if event.player.name == "player1" then
-			self:buyLand(event.buyTag, event.x, event.y, self.foot1Sprite, player1_building_1_tiledID, event.player, PLAYER1_1_PARTICLE_PLIST)
+			local dialog = PopupLayer:create("hello","hello world",handler(self,self.buyLand),
+			event.buyTag, event.x, event.y, self.foot1Sprite, player1_building_1_tiledID, event.player, PLAYER1_1_PARTICLE_PLIST)
+			self:addChild(dialog)
 		elseif event.player.name == "player2" then
-			self:buyLand(event.buyTag, event.x, event.y, self.foot2Sprite, player2_building_1_tiledID, event.player, PLAYER1_2_PARTICLE_PLIST)
+			self:buyLand(event.buyTag, event.x, event.y, self.foot2Sprite, player2_building_1_tiledID, event.player, PLAYER2_1_PARTICLE_PLIST)
 		end
 
 	end
@@ -315,31 +317,17 @@ function GameBaseScene:drawPathColor(path)
 		pathMarks[i-1]:setVisible(true)
 	end
 end
--- void GameBaseScene::buyLand(int buyTag,float x,float y ,Sprite* landSprite,int landLevel,RicherPlayer* player ,char* particlelistName)
--- {
--- 			int money =0;
-
--- 	        if(buyTag == MSG_BUY_BLANK_TAG)
--- 			{
--- 				money = LAND_BLANK_MONEY;				
--- 			}
--- 		   if(buyTag == MSG_BUY_LAND_1_TAG)
--- 			{
--- 				money = LAND_LEVEL_1_MONEY;
--- 			}
--- 			if(buyTag == MSG_BUY_LAND_2_TAG)
--- 			{
--- 				money = LAND_LEVEL_2_MONEY;
--- 			}
-
-
 
 function GameBaseScene:doSomeForParticle()
 	self.landFadeOut = cc.FadeOut:create(0.1) 
 	self.landFadeIn = cc.FadeOut:create(0.1) 
+	self.landFadeOut:retain()
+	self.landFadeIn:retain()
 
 	self.scaleby1ForBuyLand = cc.ScaleBy:create(0.1, 1.5)
 	self.scaleby2ForBuyLand = cc.ScaleBy:create(0.5, 0.7) 
+	self.scaleby1ForBuyLand:retain()
+	self.scaleby2ForBuyLand:retain()
 
 	self.foot1Sprite = display.newSprite(PLAYER1_1_PARTICLE_PNG)
 	self:addChild(self.foot1Sprite)
@@ -366,7 +354,7 @@ function GameBaseScene:doSomeForParticle()
 	self.heart2Sprite:setAnchorPoint(0,0)
 end
 
-function GameBaseScene:buyLand(buyTag, x, y, landSprite, landlevel, player, particlelistName)
+function GameBaseScene:buyLand(buyTag, x, y, landSprite, landlevel, player, particlelistName, tag)
 	local money = 0
 
 	if buyTag == MSG_BUY_BLANK_TAG then
@@ -388,13 +376,36 @@ function GameBaseScene:buyLand(buyTag, x, y, landSprite, landlevel, player, part
 -- 					landLayer->setTileGID(landLevel,ccp(x,y));
 -- 					refreshMoneyLabel(player,-money);				
 -- 				}),NULL));
-	
-
+	landSprite:setPositionX(x)
+	landSprite:setPositionY(y)
 	landSprite:setVisible(true)
-	landSprite:setPosition(x, y)
+	col = x/TILEDWIDTH
+	row = 21 - y/TILEDHEIGHT
+	-- print("GameBaseScene:buyLand: " .. col .. " " .. row)
+	local actions = cc.Sequence:create(self.scaleby1ForBuyLand,self.scaleby2ForBuyLand ,cc.CallFunc:create(function()
+									   	self:playParticle(particlelistName)
+									   	landSprite:setVisible(false)
+									   	landLayer:setTileGID(15,cc.p(col,row))
+									   	end), null)
+	landSprite:runAction(actions)
 	
 
-
+	RicherGameController:pickOnePlayerToGo()
+	
 end
+
+function GameBaseScene:playParticle(plistName)
+	print("plistName " .. plistName)
+	local particleSystem_foot = cc.ParticleSystemQuad:create(plistName)
+	particleSystem_foot:retain()
+	local batch = cc.ParticleBatchNode:createWithTexture(particleSystem_foot:getTexture())
+	batch:addChild(particleSystem_foot)
+	self:addChild(batch)
+
+	particleSystem_foot:setPosition(200, 100)
+	particleSystem_foot:release()
+	particleSystem_foot:setAutoRemoveOnFinish(true)
+end
+
 
 return GameBaseScene

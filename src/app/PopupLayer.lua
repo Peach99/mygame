@@ -1,5 +1,5 @@
-local Btn_OK_TAG = 1;
-local Btn_Cancel_TAG = 0;
+Btn_OK_TAG = 1;
+Btn_Cancel_TAG = 0;
 
 local PopupLayer = class("PopupLayer", function ()
 	return display.newLayer()
@@ -9,8 +9,8 @@ function PopupLayer:ctor()
 
 end
 
-function PopupLayer:create(title ,contentText, callback, background)
-	local background = background or DIALOG_BG
+function PopupLayer:create(title ,contentText, callback, ...)
+	local background =   DIALOG_BG
 	self = PopupLayer.new()
 
 	self.background = display.newSprite(background)
@@ -44,6 +44,7 @@ function PopupLayer:create(title ,contentText, callback, background)
 	self:addButton(Btn_OK_TAG)
 	self:addButton(Btn_Cancel_TAG)
 	self.callBack = callback
+	self.params = {...}
 
 	return self
 end
@@ -64,10 +65,15 @@ function PopupLayer:addButton(tag)
 	 	self.btnOK = cc.ui.UIPushButton.new(NORMAL_MENU, {scale9 = true})
     	self.btnOK:setButtonSize(100, 50)
     	textTTF:setString("OK")
+
+    	
 		self.btnOK:setButtonLabel(textTTF)
     	self.btnOK:onButtonPressed(function(event) event.target:setScale(1.2) end)
     	self.btnOK:onButtonRelease(function(event) event.target:setScale(1.0) end)
-    	self.btnOK:onButtonClicked(function(event) self.callBack() self:removeSelf() end)
+    	self.btnOK:onButtonClicked(function(event) 
+    		table.insert(self.params, tag)
+    		self.callBack(unpack(self.params)) self:removeSelf() 
+    		end)
     	self.btnOK:align(display.CENTER, display.cx-100, display.cy-50)
     	self:addChild(self.btnOK)
 	elseif tag == Btn_Cancel_TAG then
@@ -77,7 +83,10 @@ function PopupLayer:addButton(tag)
 		self.btnCancel:setButtonLabel(textTTF)
     	self.btnCancel:onButtonPressed(function(event) event.target:setScale(1.2) end)
     	self.btnCancel:onButtonRelease(function(event) event.target:setScale(1.0) end)
-    	self.btnCancel:onButtonClicked(function(event) self:removeSelf() end)
+    	self.btnCancel:onButtonClicked(function(event) 
+    		table.insert(self.params, tag) 
+    		self.callBack(unpack(self.params),tag) self:removeSelf() 
+    		end)
     	self.btnCancel:align(display.CENTER, display.cx+100, display.cy-50)
     	self:addChild(self.btnCancel)
 	end 

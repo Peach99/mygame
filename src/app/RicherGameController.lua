@@ -75,7 +75,7 @@ function RicherGameController:endGo()
 		print(GameBaseScene.name)
 		self.player.isMyTurn = false
 		self:handlePropEvent()
-		self:pickOnePlayerToGo()
+		-- self:pickOnePlayerToGo()
 		return
 	end
 	self:moveOneStep()
@@ -90,8 +90,8 @@ function RicherGameController:handlePropEvent()
 	print("position " .. col .. " ".. row)
 	
 	local positionAroundEnd = {}
-	positionAroundEnd[1] = {col = col, row = row - 1} --up
-	positionAroundEnd[2] = {col = col, row = row + 1} --down
+	positionAroundEnd[1] = {col = col, row = row + 1} --up
+	positionAroundEnd[2] = {col = col, row = row - 1} --down
 	positionAroundEnd[3] = {col = col - 1, row = row} --left
 	positionAroundEnd[4] = {col = col + 1, row = row} --right
 
@@ -99,7 +99,7 @@ function RicherGameController:handlePropEvent()
 		local sp = landLayer:getTileGIDAt(cc.p(positionAroundEnd[i].col, positionAroundEnd[i].row)) 
 		if sp == 1 then
 			sp = landLayer:getTileAt(cc.p(positionAroundEnd[i].col, positionAroundEnd[i].row))
-			print("landLayer:getTileGIDAt: " .. positionAroundEnd[i].col .." ".. positionAroundEnd[i].row)
+			-- print("landLayer:getTileGIDAt: " .. positionAroundEnd[i].col .." ".. positionAroundEnd[i].row)
 
 			local event = cc.EventCustom:new("MSG_BUY")
 			event.buyTag = MSG_BUY_BLANK_TAG
@@ -108,10 +108,6 @@ function RicherGameController:handlePropEvent()
 			event.player = self.player
 
 			cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
-
-
-
-
 		end
 	end
 
