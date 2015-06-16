@@ -4,6 +4,7 @@ require("cocos.init")
 require("framework.init")
 
 require("app.RicherGameController")
+require("app.Util")
 
 local MyApp = class("MyApp", cc.mvc.AppBase)
 

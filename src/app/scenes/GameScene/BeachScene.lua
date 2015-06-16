@@ -5,8 +5,8 @@ local BeachScene = class("BeachScene",GameBaseScene)
 
 function BeachScene:ctor()
 	BeachScene.super.ctor(self)
-	self.tiledColsCount = 22;
-	self.tiledRowsCount = 22;
+	tiledColsCount = 20;
+	tiledRowsCount = 15;
 	self:initPropTiledID()
 end
 
@@ -21,9 +21,9 @@ end
 function BeachScene:addMap()
 	print("BeachScene:addMap()")
 	print(map.name)
-	map = cc.TMXTiledMap:create("map/beach.tmx")
+	map = cc.TMXTiledMap:create("map/sea.tmx")
 	self:addChild(map)
-	map.name = "map/beach.tmx"
+	map.name = "map/sea.tmx"
 	print(map.name)
 end
 

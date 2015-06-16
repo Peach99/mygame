@@ -5,7 +5,7 @@ end)
 function RouteNavigation:ctor()
 end
 
-function RouteNavigation:getPath(player,stepsCount,canPassGrid,gridRowsCount,gridColsCount)
+function RouteNavigation:getPath(player,stepsCount,canPassGrid,gridColsCount,gridRowsCount)
 	self.path = {}
 
  	local canPassGrid_copy = {}

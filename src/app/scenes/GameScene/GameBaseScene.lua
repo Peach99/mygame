@@ -51,7 +51,7 @@ map = {}
 players = {}
 canPassGrid = {}
 pathMarks = {}
-wayLayer = {}
+wayLayer = nil
 landLayer = {}
 
 blank_land_tiledID   = 0
@@ -98,17 +98,15 @@ function GameBaseScene:ctor()
 	self:addPathMark()
 	self:addPlayer()
 	self:addGoButton()
-	self.tiledRowsCount = 0
-	self.tiledColsCount = 0
 end
 
 function GameBaseScene:onEnter()
 	print("GameBaseScene:onEnter")
 	print(self.name)
-	local PopupLayer = PopupLayer:create("hello","hello world",handler(self,self.goButtonCallback) )
+	-- local PopupLayer = PopupLayer:create("hello","hello world",handler(self,self.goButtonCallback) )
 	-- PopupLayer:setTitle("xxx")
 	-- PopupLayer:setContentText("xxx")
-	self:addChild(PopupLayer)
+	-- self:addChild(PopupLayer)
 end
 
 function GameBaseScene:onExit()
@@ -209,9 +207,12 @@ function GameBaseScene:setWayPassToGrid()
 	print(map.name)
  	wayLayer = map:getLayer("way")
  	
+ 	if wayLayer == nil then
+ 		return
+ 	end
+
  	local mapSize = wayLayer:getLayerSize()
- 	-- print(mapSize.width .. mapSize.height)
- 	-- print(wayLayer)
+ 	print("mapSize.width .. mapSize.height " .. mapSize.width .. mapSize.height)
  	
  	for i=1,mapSize.height do
  		canPassGrid[i] = {}
@@ -220,9 +221,9 @@ function GameBaseScene:setWayPassToGrid()
  		end
  	end
 
- 	for i=0,mapSize.width-1 do
- 		for j=0,mapSize.height-1 do
- 			local sp = wayLayer:getTileAt(cc.p(i,j))   
+ 	for i=0, mapSize.height-1 do
+ 		for j=0, mapSize.width-1 do
+ 			local sp = wayLayer:getTileAt(cc.p(j,i))   
             if sp then
  				local x = sp:getPositionX()
                 local y = sp:getPositionY()
@@ -265,7 +266,7 @@ function GameBaseScene:goButtonCallback()
 	if player then
 		math.newrandomseed()
 		local stepsCount = math.random(6)
-		local path = RouteNavigation:getPath(player, 2, canPassGrid, self.tiledRowsCount, self.tiledColsCount)
+		local path = RouteNavigation:getPath(player, stepsCount, canPassGrid, tiledColsCount, tiledRowsCount)
 		player:startGo(path) 
 	end
 
@@ -284,8 +285,8 @@ function GameBaseScene:registerNotificationObserver()
     evl = cc.EventListenerCustom:create("MSG_BUY", handler(self, self.receivedMsgForGo) )
     cc.Director:getInstance():getEventDispatcher():addEventListenerWithFixedPriority(evl,1)
 
-	-- evl = cc.EventListenerCustom:create("MSG_GO_SHOW_TAG", handler(self, self.receivedMsgForGo) )
- --    cc.Director:getInstance():getEventDispatcher():addEventListenerWithFixedPriority(evl,1)
+	evl = cc.EventListenerCustom:create("MSG_PAY_TOLLS", handler(self, self.receivedMsgForGo) )
+    cc.Director:getInstance():getEventDispatcher():addEventListenerWithFixedPriority(evl,1)
 
 end
 
@@ -297,16 +298,21 @@ function GameBaseScene:receivedMsgForGo(event)
 		self:getChildByName("menu"):setVisible(true)
 	elseif event:getEventName() == "MSG_BUY" then
 		if event.player.name == "player1" then
-			local dialog = PopupLayer:create("hello","hello world",handler(self,self.buyLand),
-			event.buyTag, event.x, event.y, self.foot1Sprite, player1_building_1_tiledID, event.player, PLAYER1_1_PARTICLE_PLIST)
+			local dialog = PopupLayer:create("hello","hello world",handler(self,self.buyLandCallback),
+			event.buyTag, event.x, event.y, self.foot1Sprite, event.level, event.player, PLAYER1_1_PARTICLE_PLIST)
 			self:addChild(dialog)
 		elseif event.player.name == "player2" then
-			self:buyLand(event.buyTag, event.x, event.y, self.foot2Sprite, player2_building_1_tiledID, event.player, PLAYER2_1_PARTICLE_PLIST)
+			self:buyLand(event.buyTag, event.x, event.y, self.foot2Sprite, event.level, event.player, PLAYER2_1_PARTICLE_PLIST)
+			RicherGameController:pickOnePlayerToGo()
 		end
-
+	elseif event:getEventName() == "MSG_PAY_TOLLS" then
+		print("receivedMsgForGo MSG_PAY_TOLLS........." .. event.payTag)
+		    -- buy_land_x = messageVector.at(1)->floatValue();  
+      --       buy_land_y = messageVector.at(2)->floatValue();  
+      --       int playerTag = messageVector.at(3)->intValue();  
+        self:payTolls(event.payTag, event.x, event.y, event.player)
+        RicherGameController:pickOnePlayerToGo()
 	end
-		-- buyLand(MSG_BUY_BLANK_TAG,buy_land_x,buy_land_y,foot1Sprite,player1_building_1_tiledID,player1,PLAYER1_1_PARTICLE_PLIST);
-
 end
 
 function GameBaseScene:drawPathColor(path)
@@ -354,7 +360,28 @@ function GameBaseScene:doSomeForParticle()
 	self.heart2Sprite:setAnchorPoint(0,0)
 end
 
-function GameBaseScene:buyLand(buyTag, x, y, landSprite, landlevel, player, particlelistName, tag)
+function GameBaseScene:payTolls(payTag, x, y, player)
+	if payTag == MSG_PAY_TOLLS_1_TAG then
+		local money = LAND_BLANK_MONEY
+	elseif payTag == MSG_PAY_TOLLS_2_TAG then
+		local money = LAND_LEVEL_1_MONEY
+	elseif payTag == MSG_PAY_TOLLS_3_TAG then
+		local money = LAND_LEVEL_2_MONEY
+	end
+
+
+
+end
+
+function GameBaseScene:buyLandCallback(buyTag, x, y, landSprite, landlevel, player, particlelistName, dialogResult)
+	if dialogResult == Btn_OK_TAG then
+	self:buyLand(buyTag, x, y, landSprite, landlevel, player, particlelistName, tag)
+	end
+
+	RicherGameController:pickOnePlayerToGo()
+end
+
+function GameBaseScene:buyLand(buyTag, x, y, landSprite, landlevel, player, particlelistName)
 	local money = 0
 
 	if buyTag == MSG_BUY_BLANK_TAG then
@@ -379,22 +406,21 @@ function GameBaseScene:buyLand(buyTag, x, y, landSprite, landlevel, player, part
 	landSprite:setPositionX(x)
 	landSprite:setPositionY(y)
 	landSprite:setVisible(true)
-	col = x/TILEDWIDTH
-	row = 21 - y/TILEDHEIGHT
+
+	local col, row = Util:xy2coordinate(x,y,map)
 	-- print("GameBaseScene:buyLand: " .. col .. " " .. row)
 	local actions = cc.Sequence:create(self.scaleby1ForBuyLand,self.scaleby2ForBuyLand ,cc.CallFunc:create(function()
-									   	self:playParticle(particlelistName)
+									   	self:playParticle(x, y, particlelistName)
 									   	landSprite:setVisible(false)
-									   	landLayer:setTileGID(15,cc.p(col,row))
+									   	landLayer:setTileGID(landlevel,cc.p(col,row))
 									   	end), null)
 	landSprite:runAction(actions)
 	
 
-	RicherGameController:pickOnePlayerToGo()
 	
 end
 
-function GameBaseScene:playParticle(plistName)
+function GameBaseScene:playParticle(x, y, plistName)
 	print("plistName " .. plistName)
 	local particleSystem_foot = cc.ParticleSystemQuad:create(plistName)
 	particleSystem_foot:retain()
@@ -402,7 +428,7 @@ function GameBaseScene:playParticle(plistName)
 	batch:addChild(particleSystem_foot)
 	self:addChild(batch)
 
-	particleSystem_foot:setPosition(200, 100)
+	particleSystem_foot:setPosition(x+TILEDWIDTH/2, y+TILEDHEIGHT/2)
 	particleSystem_foot:release()
 	particleSystem_foot:setAutoRemoveOnFinish(true)
 end

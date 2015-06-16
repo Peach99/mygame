@@ -96,19 +96,112 @@ function RicherGameController:handlePropEvent()
 	positionAroundEnd[4] = {col = col + 1, row = row} --right
 
 	for i=1,4 do
-		local sp = landLayer:getTileGIDAt(cc.p(positionAroundEnd[i].col, positionAroundEnd[i].row)) 
-		if sp == 1 then
-			sp = landLayer:getTileAt(cc.p(positionAroundEnd[i].col, positionAroundEnd[i].row))
-			-- print("landLayer:getTileGIDAt: " .. positionAroundEnd[i].col .." ".. positionAroundEnd[i].row)
+		local sp = landLayer:getTileAt(cc.p(positionAroundEnd[i].col, positionAroundEnd[i].row)) 
+		if sp then
+			local spGid = landLayer:getTileGIDAt(cc.p(positionAroundEnd[i].col, positionAroundEnd[i].row))
 
-			local event = cc.EventCustom:new("MSG_BUY")
-			event.buyTag = MSG_BUY_BLANK_TAG
-			event.x = sp:getPositionX()
-			event.y = sp:getPositionY()
-			event.player = self.player
+			
+			if spGid == blank_land_tiledID then
+				if self.player.name == "player1" then
+					local event = cc.EventCustom:new("MSG_BUY")
+					event.x , event.y= sp:getPosition()
+					event.player = self.player
+					event.level = player1_building_1_tiledID
+					event.buyTag = MSG_BUY_BLANK_TAG
+					cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
+					return 
+				elseif self.player.name == "player2" then
+					local event = cc.EventCustom:new("MSG_BUY")
+					event.x , event.y= sp:getPosition()
+					event.player = self.player
+					event.level = player2_building_1_tiledID
+					event.buyTag = MSG_BUY_BLANK_TAG
+					cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
+					return 
+				end
 
-			cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
-			return
+			elseif spGid == player1_building_1_tiledID then
+				if self.player.name == "player1" then
+					local event = cc.EventCustom:new("MSG_BUY")
+					event.x , event.y= sp:getPosition()
+					event.player = self.player
+					event.level = player1_building_2_tiledID
+					event.buyTag = MSG_BUY_LAND_1_TAG
+					cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
+					return 
+				elseif self.player.name == "player2" then
+					local event = cc.EventCustom:new("MSG_PAY_TOLLS")
+					event.x , event.y= sp:getPosition()
+					event.player = self.player
+					event.payTag = MSG_PAY_TOLLS_1_TAG
+					cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
+					return
+				end
+
+			elseif spGid == player1_building_2_tiledID then
+				if self.player.name == "player1" then
+					local event = cc.EventCustom:new("MSG_BUY")
+					event.x , event.y= sp:getPosition()
+					event.player = self.player
+					event.level = player1_building_3_tiledID
+					event.buyTag = MSG_BUY_LAND_2_TAG
+					cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
+					return 
+				elseif self.player.name == "player2" then
+					local event = cc.EventCustom:new("MSG_PAY_TOLLS")
+					event.x , event.y= sp:getPosition()
+					event.player = self.player
+					event.payTag = MSG_PAY_TOLLS_2_TAG
+					cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
+					return
+				end
+
+			elseif spGid == player2_building_1_tiledID then
+				if self.player.name == "player1" then
+					local event = cc.EventCustom:new("MSG_PAY_TOLLS")
+					event.x , event.y= sp:getPosition()
+					event.player = self.player
+					event.payTag = MSG_PAY_TOLLS_1_TAG
+					cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
+					return
+				elseif self.player.name == "player2" then
+					local event = cc.EventCustom:new("MSG_BUY")
+					event.x , event.y= sp:getPosition()
+					event.player = self.player
+					event.level = player2_building_2_tiledID
+					event.buyTag = MSG_BUY_LAND_1_TAG
+					cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
+					return 
+				end
+
+			elseif spGid == player2_building_2_tiledID then
+				if self.player.name == "player1" then
+					local event = cc.EventCustom:new("MSG_PAY_TOLLS")
+					event.x , event.y= sp:getPosition()
+					event.player = self.player
+					event.payTag = MSG_PAY_TOLLS_2_TAG
+					cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
+					return
+				elseif self.player.name == "player2" then
+					local event = cc.EventCustom:new("MSG_BUY")
+					event.x , event.y= sp:getPosition()
+					event.player = self.player
+					event.level = player2_building_3_tiledID
+					event.buyTag = MSG_BUY_LAND_2_TAG
+					cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
+					return 
+				end
+			
+
+			elseif spGid == player1_building_3_tiledID or spGid == player2_building_3_tiledID then
+				local event = cc.EventCustom:new("MSG_PAY_TOLLS")
+				event.x , event.y= sp:getPosition()
+				event.player = self.player
+				event.payTag = MSG_PAY_TOLLS_3_TAG
+				cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
+				return
+			end
+
 		end
 	end
 
@@ -129,11 +222,13 @@ end
 
 function RicherGameController:pickOnePlayerToGo()
 	local players = GameBaseScene:getPlayers()
+	local canPassGrid = GameBaseScene:getcanPassGrid()
+	print("···........."..tiledColsCount..tiledRowsCount)
 	for i=1,#players do
 		if players[i].isMyTurn == true then
 			math.newrandomseed()
 			local stepsCount = math.random(6)
-			local path = RouteNavigation:getPath(players[i], 5, GameBaseScene:getcanPassGrid(), 22, 22)
+			local path = RouteNavigation:getPath(players[i], stepsCount, canPassGrid, tiledColsCount, tiledRowsCount)
 			players[i]:startGo(path)
 			-- print("pickOnePlayerToGo")
 			return
@@ -143,7 +238,7 @@ function RicherGameController:pickOnePlayerToGo()
 	for i=1,#players do
 		players[i].isMyTurn = true
 	end
-	-- self:dispatchEvent({name = "MSG_GO_SHOW_TAG"})
+
 	local event = cc.EventCustom:new("MSG_GO_SHOW_TAG")
 	cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
 end
