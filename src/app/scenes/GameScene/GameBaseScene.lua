@@ -4,6 +4,8 @@ local RouteNavigation = import("app.RouteNavigation")
 
 local PopupLayer = import("app.PopupLayer")
 
+local Toast = import("app.Toast")
+
 local GameBaseScene = class("GameBaseScene", function(name)
 	print(name)
 	return display.newScene(name)
@@ -298,9 +300,16 @@ function GameBaseScene:receivedMsgForGo(event)
 		self:getChildByName("menu"):setVisible(true)
 	elseif event:getEventName() == "MSG_BUY" then
 		if event.player.name == "player1" then
-			local dialog = PopupLayer:create("hello","hello world",handler(self,self.buyLandCallback),
-			event.buyTag, event.x, event.y, self.foot1Sprite, event.level, event.player, PLAYER1_1_PARTICLE_PLIST)
-			self:addChild(dialog)
+			if event.buyTag == MSG_BUY_BLANK_TAG then
+				local dialog = PopupLayer:create("Buy Land","buy the land？",handler(self,self.buyLandCallback),
+				event.buyTag, event.x, event.y, self.foot1Sprite, event.level, event.player, PLAYER1_1_PARTICLE_PLIST)
+				self:addChild(dialog)
+			else
+				local dialog = PopupLayer:create("Upgrade building","Upgrade building？",handler(self,self.buyLandCallback),
+				event.buyTag, event.x, event.y, self.foot1Sprite, event.level, event.player, PLAYER1_1_PARTICLE_PLIST)
+				self:addChild(dialog)
+			end
+
 		elseif event.player.name == "player2" then
 			self:buyLand(event.buyTag, event.x, event.y, self.foot2Sprite, event.level, event.player, PLAYER2_1_PARTICLE_PLIST)
 			RicherGameController:pickOnePlayerToGo()
@@ -326,7 +335,7 @@ end
 
 function GameBaseScene:doSomeForParticle()
 	self.landFadeOut = cc.FadeOut:create(0.1) 
-	self.landFadeIn = cc.FadeOut:create(0.1) 
+	self.landFadeIn = cc.FadeIn:create(0.1) 
 	self.landFadeOut:retain()
 	self.landFadeIn:retain()
 
@@ -361,15 +370,35 @@ function GameBaseScene:doSomeForParticle()
 end
 
 function GameBaseScene:payTolls(payTag, x, y, player)
+	local money = 0
 	if payTag == MSG_PAY_TOLLS_1_TAG then
-		local money = LAND_BLANK_MONEY
+		money = LAND_BLANK_MONEY
 	elseif payTag == MSG_PAY_TOLLS_2_TAG then
-		local money = LAND_LEVEL_1_MONEY
+		money = LAND_LEVEL_1_MONEY
 	elseif payTag == MSG_PAY_TOLLS_3_TAG then
-		local money = LAND_LEVEL_2_MONEY
+		money = LAND_LEVEL_2_MONEY
 	end
 
+	local col, pow = Util:xy2coordinate(x, y, map)
+	local sp = landLayer:getTileAt(cc.p(col, row))
+	if sp then
+		sp:runAction(cc.Sequence:create(self.landFadeOut, self.landFadeIn, null))
+		local toast = Toast:create("-".. money, 0.6, x, y)
+		self:addChild(toast)
+		toast:play()
+		if player.name == "player1" then
+			local toast2 = Toast:create("+".. money, 0.6, players[2]:getPositionX() , players[2]:getPositionY())
+			self:addChild(toast2)
+			toast2:play()
 
+		elseif player.name == "player2" then
+			local toast2 = Toast:create("+".. money, 0.6, players[1]:getPositionX() , players[2]:getPositionY())
+			self:addChild(toast2)
+			toast2:play()
+
+		end
+
+	end
 
 end
 
@@ -391,18 +420,7 @@ function GameBaseScene:buyLand(buyTag, x, y, landSprite, landlevel, player, part
 	elseif buyTag == MSG_BUY_LAND_2_TAG then
 		money = LAND_LEVEL_2_MONEY
 	end
--- 			Point pointOfGL = Util::map2GL(ccp(x,y),GameBaseScene::_map);
-					
--- 			landSprite->setVisible(true);
--- 			landSprite->setPosition(pointOfGL);
--- 			Point pointOfMap = ccp(x,y);
--- 			landSprite->runAction(Sequence::create(scaleby1ForBuyLand, scaleby2ForBuyLand,CallFunc::create([this,pointOfMap,pointOfGL,landSprite,landLevel,x,y,player,money,particlelistName]()
--- 				{
--- 					playParticle(pointOfGL,particlelistName);
--- 					landSprite->setVisible(false);
--- 					landLayer->setTileGID(landLevel,ccp(x,y));
--- 					refreshMoneyLabel(player,-money);				
--- 				}),NULL));
+
 	landSprite:setPositionX(x)
 	landSprite:setPositionY(y)
 	landSprite:setVisible(true)
@@ -416,8 +434,10 @@ function GameBaseScene:buyLand(buyTag, x, y, landSprite, landlevel, player, part
 									   	end), null)
 	landSprite:runAction(actions)
 	
+end
 
-	
+function GameBaseScene:displayArea()
+
 end
 
 function GameBaseScene:playParticle(x, y, plistName)

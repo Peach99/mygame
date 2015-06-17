@@ -156,6 +156,16 @@ function RicherGameController:handlePropEvent()
 					return
 				end
 
+			elseif spGid == player1_building_3_tiledID then
+				if self.player.name == "player2" then
+					local event = cc.EventCustom:new("MSG_PAY_TOLLS")
+					event.x , event.y= sp:getPosition()
+					event.player = self.player
+					event.payTag = MSG_PAY_TOLLS_3_TAG
+					cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
+					return
+				end
+
 			elseif spGid == player2_building_1_tiledID then
 				if self.player.name == "player1" then
 					local event = cc.EventCustom:new("MSG_PAY_TOLLS")
@@ -192,15 +202,16 @@ function RicherGameController:handlePropEvent()
 					return 
 				end
 			
-
-			elseif spGid == player1_building_3_tiledID or spGid == player2_building_3_tiledID then
-				local event = cc.EventCustom:new("MSG_PAY_TOLLS")
-				event.x , event.y= sp:getPosition()
-				event.player = self.player
-				event.payTag = MSG_PAY_TOLLS_3_TAG
-				cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
-				return
-			end
+			elseif spGid == player2_building_3_tiledID then
+				if self.player.name == "player1" then
+					local event = cc.EventCustom:new("MSG_PAY_TOLLS")
+					event.x , event.y= sp:getPosition()
+					event.player = self.player
+					event.payTag = MSG_PAY_TOLLS_3_TAG
+					cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
+					return
+				end
+			end	
 
 		end
 	end
