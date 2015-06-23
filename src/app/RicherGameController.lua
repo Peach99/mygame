@@ -9,13 +9,6 @@ RicherGameController = class("RicherGameController", function()
 end)
 
 function RicherGameController:ctor()
-	-- cc(self):addComponent("components.behavior.EventProtocol"):exportMethods()
-	-- self:addEventListener("MSG_GO_SHOW_TAG",handler(GameBaseScene,GameBaseScene.receivedMsgForGo) ,{value = MSG_GO_SHOW_TAG})
-	-- local eventDispatcher = cc.Director:getInstance():getEventDispatcher()
- --    local customListenerBg = cc.EventListenerCustom:create("goButtonCallback",
- --                                handler(self, self.startRealGo))
- --    eventDispatcher:addEventListenerWithFixedPriority(customListenerBg, 1)
-	-- print("RicherGameController:ctor()")
 end
 
 function RicherGameController:shareInstance()
@@ -72,7 +65,6 @@ function RicherGameController:endGo()
 	pathMarks[self.stepHasGone]:setVisible(false)
 	self.stepHasGone = self.stepHasGone + 1
 	if self.stepHasGone >= #self.currentPath then
-		print(GameBaseScene.name)
 		self.player.isMyTurn = false
 		self:handlePropEvent()
 		-- self:pickOnePlayerToGo()
@@ -84,10 +76,31 @@ end
 function RicherGameController:handlePropEvent()
 	local col = self.currentPath[self.stepHasGone].col
 	local row = self.currentPath[self.stepHasGone].row
-	local mapSize = landLayer:getLayerSize()
-	print("mapSize " .. mapSize.width .. " ".. mapSize.height)
+	local mapSize = wayLayer:getLayerSize()
+	-- print("mapSize " .. mapSize.width .. " ".. mapSize.height)
 	row = mapSize.height-1 - row
-	print("position " .. col .. " ".. row)
+	print("wayLayer:getTileAt(cc.p(col, row)) " .. wayLayer:getTileGIDAt(cc.p(col, row)))
+
+	local sp = wayLayer:getTileAt(cc.p(col, row))
+	if sp and wayLayer:getTileGIDAt(cc.p(col, row)) == randomEvent_tiledID then
+		local event = cc.EventCustom:new("MSG_RANDOM_ASK_EVENT_TAG")
+		event.x , event.y= sp:getPosition()
+		event.player = self.player
+		cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
+		return
+	end
+
+
+	self:aroundLandEvent()
+end
+
+function RicherGameController:aroundLandEvent()
+	local col = self.currentPath[self.stepHasGone].col
+	local row = self.currentPath[self.stepHasGone].row
+	local mapSize = landLayer:getLayerSize()
+	-- print("mapSize " .. mapSize.width .. " ".. mapSize.height)
+	row = mapSize.height-1 - row
+	-- print("position " .. col .. " ".. row)
 	
 	local positionAroundEnd = {}
 	positionAroundEnd[1] = {col = col, row = row + 1} --up
@@ -163,6 +176,7 @@ function RicherGameController:handlePropEvent()
 					event.player = self.player
 					event.payTag = MSG_PAY_TOLLS_3_TAG
 					cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
+					self:pickOnePlayerToGo()
 					return
 				end
 
@@ -209,32 +223,19 @@ function RicherGameController:handlePropEvent()
 					event.player = self.player
 					event.payTag = MSG_PAY_TOLLS_3_TAG
 					cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
+					self:pickOnePlayerToGo()
 					return
 				end
 			end	
 
 		end
 	end
-
-	for i=1,#GameBaseScene:getPlayers() do
-		if players[i].isMyTurn == true then
-			self:pickOnePlayerToGo()
-			return
-		end
-	end
-
-	for i=1,#players do
-		players[i].isMyTurn = true
-	end
-	local event = cc.EventCustom:new("MSG_GO_SHOW_TAG")
-	cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
-
 end
 
 function RicherGameController:pickOnePlayerToGo()
 	local players = GameBaseScene:getPlayers()
 	local canPassGrid = GameBaseScene:getcanPassGrid()
-	print("···........."..tiledColsCount..tiledRowsCount)
+	-- print("···........."..tiledColsCount..tiledRowsCount)
 	for i=1,#players do
 		if players[i].isMyTurn == true then
 			math.newrandomseed()

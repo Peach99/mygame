@@ -1,3 +1,5 @@
+local scheduler = require("framework.scheduler")
+
 local RicherPlayer = import("app.RicherPlayer")
 
 local RouteNavigation = import("app.RouteNavigation")
@@ -55,6 +57,7 @@ canPassGrid = {}
 pathMarks = {}
 wayLayer = nil
 landLayer = {}
+randomAskEvents = {}
 
 blank_land_tiledID   = 0
 strength_30_tiledID  = 0
@@ -100,6 +103,7 @@ function GameBaseScene:ctor()
 	self:addPathMark()
 	self:addPlayer()
 	self:addGoButton()
+	self:initRandomAskEvent()
 end
 
 function GameBaseScene:onEnter()
@@ -172,10 +176,10 @@ function GameBaseScene:addPlayer()
 	
 	math.newrandomseed()
 	local randNum = math.random(#self.wayLayerPass_vector)
-	print(randNum)
+	-- print(randNum)
 	local x = self.wayLayerPass_vector[randNum].x
 	local y = self.wayLayerPass_vector[randNum].y
-	print("x = " .. x .. " y = " .. y)
+	-- print("x = " .. x .. " y = " .. y)
 	player1:setAnchorPoint(0,0.5)
 	player1:setPosition(x, y + TILEDHEIGHT)
 	player1:setName("player1")
@@ -197,7 +201,7 @@ function GameBaseScene:addPlayer()
 	print(randNum)
 	local x = self.wayLayerPass_vector[randNum].x
 	local y = self.wayLayerPass_vector[randNum].y
-	print("x = " .. x .. " y = " .. y)
+	-- print("x = " .. x .. " y = " .. y)
 	player2:setAnchorPoint(0,0.5)
 	player2:setPosition(x, y + TILEDHEIGHT)
 	player2:setName("player2")
@@ -206,7 +210,7 @@ function GameBaseScene:addPlayer()
 end
 
 function GameBaseScene:setWayPassToGrid()  
-	print(map.name)
+	-- print(map.name)
  	wayLayer = map:getLayer("way")
  	
  	if wayLayer == nil then
@@ -214,7 +218,7 @@ function GameBaseScene:setWayPassToGrid()
  	end
 
  	local mapSize = wayLayer:getLayerSize()
- 	print("mapSize.width .. mapSize.height " .. mapSize.width .. mapSize.height)
+ 	-- print("mapSize.width .. mapSize.height " .. mapSize.width .. mapSize.height)
  	
  	for i=1,mapSize.height do
  		canPassGrid[i] = {}
@@ -242,7 +246,22 @@ end
 
 function GameBaseScene:initLandLayerFromMap()
 	landLayer = map:getLayer("land")
-	print(landLayer)
+	-- print(landLayer)
+end
+
+function GameBaseScene:initRandomAskEvent()
+-- 	TAX_REBATES_TAG = 1; --政府鼓励投资，返还税金10000
+-- PAY_TAXES_TAG = 2; --政府严查账务，补交税金20000
+-- LOSS_STRENGTH_TAG =3;--喝到假酒，上吐下泻，体力耗光
+-- PHYSICAL_RECOVERY_TAG =4;--吃了大补丸，体力恢复
+-- INVESTMENT_DIVIDENDS_TAG = 5 ;--投资获利，分红20000
+-- INVESTMENT_LOSS_TAG = 6; --投资失败，亏损30000
+	table.insert(randomAskEvents, TAX_REBATES_TAG, "The government encourages investment, tax rebates 10000")
+	table.insert(randomAskEvents, PAY_TAXES_TAG, "Government scrutiny of accounts, pay taxes 20000")
+	table.insert(randomAskEvents, LOSS_STRENGTH_TAG, "To drink alcohol, diarrhea, loss of light strength")
+	table.insert(randomAskEvents, PHYSICAL_RECOVERY_TAG, "Eat cake, physical recovery")
+	table.insert(randomAskEvents, INVESTMENT_DIVIDENDS_TAG, "Investment profits, dividends 20000")
+	table.insert(randomAskEvents, INVESTMENT_LOSS_TAG, "Investment failure, loss 30000")
 end
 
 function GameBaseScene:addGoButton()
@@ -278,22 +297,25 @@ function GameBaseScene:goButtonCallback()
 end
 
 function GameBaseScene:registerNotificationObserver()
-	local evl = cc.EventListenerCustom:create("MSG_GO_HIDE_TAG", handler(self, self.receivedMsgForGo) )
+	local evl = cc.EventListenerCustom:create("MSG_GO_HIDE_TAG", handler(self, self.receivedNotificationOMsg) )
     cc.Director:getInstance():getEventDispatcher():addEventListenerWithFixedPriority(evl,1)
 
-	evl = cc.EventListenerCustom:create("MSG_GO_SHOW_TAG", handler(self, self.receivedMsgForGo) )
+	evl = cc.EventListenerCustom:create("MSG_GO_SHOW_TAG", handler(self, self.receivedNotificationOMsg) )
     cc.Director:getInstance():getEventDispatcher():addEventListenerWithFixedPriority(evl,1)
 
-    evl = cc.EventListenerCustom:create("MSG_BUY", handler(self, self.receivedMsgForGo) )
+    evl = cc.EventListenerCustom:create("MSG_BUY", handler(self, self.receivedNotificationOMsg) )
     cc.Director:getInstance():getEventDispatcher():addEventListenerWithFixedPriority(evl,1)
 
-	evl = cc.EventListenerCustom:create("MSG_PAY_TOLLS", handler(self, self.receivedMsgForGo) )
+	evl = cc.EventListenerCustom:create("MSG_PAY_TOLLS", handler(self, self.receivedNotificationOMsg) )
+    cc.Director:getInstance():getEventDispatcher():addEventListenerWithFixedPriority(evl,1)
+
+	evl = cc.EventListenerCustom:create("MSG_RANDOM_ASK_EVENT_TAG", handler(self, self.receivedNotificationOMsg) )
     cc.Director:getInstance():getEventDispatcher():addEventListenerWithFixedPriority(evl,1)
 
 end
 
-function GameBaseScene:receivedMsgForGo(event)
-	print("receivedMsgForGo ".. event:getEventName() )
+function GameBaseScene:receivedNotificationOMsg(event)
+	-- print("receivedNotificationOMsg ".. event:getEventName() )
 	if event:getEventName() == "MSG_GO_HIDE_TAG" then
 		self:getChildByName("menu"):setVisible(false)
 	elseif event:getEventName() == "MSG_GO_SHOW_TAG" then
@@ -315,12 +337,14 @@ function GameBaseScene:receivedMsgForGo(event)
 			RicherGameController:pickOnePlayerToGo()
 		end
 	elseif event:getEventName() == "MSG_PAY_TOLLS" then
-		print("receivedMsgForGo MSG_PAY_TOLLS........." .. event.payTag)
-		    -- buy_land_x = messageVector.at(1)->floatValue();  
-      --       buy_land_y = messageVector.at(2)->floatValue();  
-      --       int playerTag = messageVector.at(3)->intValue();  
+		print("receivedNotificationOMsg MSG_PAY_TOLLS........." .. event.payTag)
         self:payTolls(event.payTag, event.x, event.y, event.player)
         RicherGameController:pickOnePlayerToGo()
+	elseif event:getEventName() == "MSG_RANDOM_ASK_EVENT_TAG" then
+		self:doRandomAskEvent(event.player)
+		scheduler.performWithDelayGlobal(handler(RicherGameController:shareInstance(),
+												 RicherGameController.aroundLandEvent), 
+										 TOAST_SHOW_TIME)
 	end
 end
 
@@ -379,7 +403,7 @@ function GameBaseScene:payTolls(payTag, x, y, player)
 		money = LAND_LEVEL_2_MONEY
 	end
 
-	local col, pow = Util:xy2coordinate(x, y, map)
+	local col, row = Util:xy2coordinate(x, y, map)
 	local sp = landLayer:getTileAt(cc.p(col, row))
 	if sp then
 		sp:runAction(cc.Sequence:create(self.landFadeOut, self.landFadeIn, null))
@@ -395,9 +419,7 @@ function GameBaseScene:payTolls(payTag, x, y, player)
 			local toast2 = Toast:create("+".. money, 0.6, players[1]:getPositionX() , players[2]:getPositionY())
 			self:addChild(toast2)
 			toast2:play()
-
 		end
-
 	end
 
 end
@@ -407,7 +429,10 @@ function GameBaseScene:buyLandCallback(buyTag, x, y, landSprite, landlevel, play
 	self:buyLand(buyTag, x, y, landSprite, landlevel, player, particlelistName, tag)
 	end
 
-	RicherGameController:pickOnePlayerToGo()
+	scheduler.performWithDelayGlobal(handler(RicherGameController:shareInstance(),
+											 RicherGameController.pickOnePlayerToGo), 
+									 0.8)
+	
 end
 
 function GameBaseScene:buyLand(buyTag, x, y, landSprite, landlevel, player, particlelistName)
@@ -436,12 +461,39 @@ function GameBaseScene:buyLand(buyTag, x, y, landSprite, landlevel, player, part
 	
 end
 
+function GameBaseScene:doRandomAskEvent(player)
+	print("GameBaseScene:doRandomAskEvent(player)" .. randomAskEvents[TAX_REBATES_TAG])
+	math.newrandomseed()
+
+	local randomNumber = math.random(#randomAskEvents)
+
+
+	if randomNumber == TAX_REBATES_TAG then
+
+	elseif randomNumber == PAY_TAXES_TAG then
+
+	elseif randomNumber == LOSS_STRENGTH_TAG then
+
+	elseif randomNumber == PHYSICAL_RECOVERY_TAG then
+
+	elseif randomNumber == INVESTMENT_DIVIDENDS_TAG then
+
+	elseif randomNumber == INVESTMENT_LOSS_TAG then
+			
+	end
+
+	local toast = Toast:create(randomAskEvents[randomNumber], 0.6, display.cx, display.cy)
+	self:addChild(toast)
+	toast:play()
+	
+end
+
 function GameBaseScene:displayArea()
 
 end
 
 function GameBaseScene:playParticle(x, y, plistName)
-	print("plistName " .. plistName)
+	-- print("plistName " .. plistName)
 	local particleSystem_foot = cc.ParticleSystemQuad:create(plistName)
 	particleSystem_foot:retain()
 	local batch = cc.ParticleBatchNode:createWithTexture(particleSystem_foot:getTexture())

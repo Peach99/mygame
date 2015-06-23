@@ -21,9 +21,9 @@ end
 function BeachScene:addMap()
 	print("BeachScene:addMap()")
 	print(map.name)
-	map = cc.TMXTiledMap:create("map/sea.tmx")
+	map = cc.TMXTiledMap:create("map/beach.tmx")
 	self:addChild(map)
-	map.name = "map/sea.tmx"
+	map.name = "map/beach.tmx"
 	print(map.name)
 end
 

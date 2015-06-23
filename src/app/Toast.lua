@@ -16,12 +16,12 @@ function Toast:create(text, time, x, y)
 	    color = cc.c3b(255, 0, 0)
 	})
 	self.label:ignoreAnchorPointForPosition(false) 
-	self.label:setAnchorPoint(0,0)
+	self.label:setAnchorPoint(0.5,0.5)
 
 	self.back = cc.LayerColor:create(cc.c4b(100,100,100,255))
 	self.back:setContentSize(self.label:getContentSize())
 	self.back:ignoreAnchorPointForPosition(false)  
-	self.back:setAnchorPoint(0,0)
+	self.back:setAnchorPoint(0.5,0.5)
 
 	self.back:setPosition(x, y)
 	self.label:setPosition(x, y)
@@ -49,7 +49,7 @@ function Toast:play()
 	local fadeOut = cc.FadeOut:create(self.time)
 	local actionDown = cc.Spawn:create(moveDown, fadeOut)
 
-	self.actionUpDown = cc.Sequence:create(actionUp, cc.DelayTime:create(0.5), actionDown, null)
+	self.actionUpDown = cc.Sequence:create(actionUp, cc.DelayTime:create(self.time*2), actionDown, null)
 
 	self.back:setOpacity(0)
 	self.label:setOpacity(0)
