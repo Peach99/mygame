@@ -8,8 +8,10 @@ local PopupLayer = import("app.PopupLayer")
 
 local Toast = import("app.Toast")
 
+local Item_crab = import("app.Item_crab")
+
 local GameBaseScene = class("GameBaseScene", function(name)
-	print(name)
+	-- print(name)
 	return display.newScene(name)
 end)
 
@@ -104,6 +106,8 @@ function GameBaseScene:ctor()
 	self:addPlayer()
 	self:addGoButton()
 	self:initRandomAskEvent()
+	self:initItemSprite()
+	self:registerBlockWaySchedule()
 end
 
 function GameBaseScene:onEnter()
@@ -207,6 +211,7 @@ function GameBaseScene:addPlayer()
 	player2:setName("player2")
 	self:addChild(player2)
 	players[#players+1] = player2
+
 end
 
 function GameBaseScene:setWayPassToGrid()  
@@ -312,6 +317,36 @@ function GameBaseScene:registerNotificationObserver()
 	evl = cc.EventListenerCustom:create("MSG_RANDOM_ASK_EVENT_TAG", handler(self, self.receivedNotificationOMsg) )
     cc.Director:getInstance():getEventDispatcher():addEventListenerWithFixedPriority(evl,1)
 
+	evl = cc.EventListenerCustom:create("MSG_BLOCK_WAY_EVENT", handler(self, self.receivedNotificationOMsg) )
+    cc.Director:getInstance():getEventDispatcher():addEventListenerWithFixedPriority(evl,1)
+
+end
+
+function GameBaseScene:initItemSprite()
+	self.Item_crab = Item_crab.new()
+	self.Item_crab:setAnchorPoint(0,0)
+	self:addChild(self.Item_crab)
+
+	local moveAnimate = cca.animate(display.getAnimationCache("normal_crab_animation"))
+	local repeate = cc.RepeatForever:create(moveAnimate)
+
+	self.Item_crab:runAction(repeate)
+	self:updateBlockWaySprites()
+end
+
+function GameBaseScene:registerBlockWaySchedule()
+	scheduler.scheduleGlobal(handler(self, self.updateBlockWaySprites), 5)
+end
+
+function GameBaseScene:updateBlockWaySprites()
+	print("GameBaseScene:updateBlockWaySprites()")
+	math.newrandomseed()
+	local randomNumber = math.random(#self.wayLayerPass_vector)
+	local x = self.wayLayerPass_vector[randomNumber].x
+	local y = self.wayLayerPass_vector[randomNumber].y
+
+	self.Item_crab:setPosition(x-5,y)
+
 end
 
 function GameBaseScene:receivedNotificationOMsg(event)
@@ -345,6 +380,9 @@ function GameBaseScene:receivedNotificationOMsg(event)
 		scheduler.performWithDelayGlobal(handler(RicherGameController:shareInstance(),
 												 RicherGameController.aroundLandEvent), 
 										 TOAST_SHOW_TIME)
+
+	elseif event:getEventName() == "MSG_BLOCK_WAY_EVENT" then
+		self:doBlockWayEvent(event.player)
 	end
 end
 
@@ -486,6 +524,17 @@ function GameBaseScene:doRandomAskEvent(player)
 	self:addChild(toast)
 	toast:play()
 	
+end
+
+function GameBaseScene:doBlockWayEvent(player)
+	print("GameBaseScene:doBlockWayEvent()")
+
+
+
+
+
+	local event = cc.EventCustom:new("MSG_HANDLE_PROP_EVENT")
+	cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
 end
 
 function GameBaseScene:displayArea()

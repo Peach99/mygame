@@ -9,6 +9,7 @@ RicherGameController = class("RicherGameController", function()
 end)
 
 function RicherGameController:ctor()
+	self:registerNotificationObserver()
 end
 
 function RicherGameController:shareInstance()
@@ -34,7 +35,7 @@ function RicherGameController:moveOneStep(player)
 	local nextCol = self.currentPath[self.stepHasGone].col - self.currentPath[self.stepHasGone+1].col
 	-- print("nextRow : " .. nextRow .. " nextCol : " .. nextCol)
 
-	local moveAnimate = {}
+	local moveAnimate = nil
 
 	if nextRow == -1 then
 		moveAnimate = cca.animate(display.getAnimationCache("player" .. self.player.tag .. "up"))
@@ -66,8 +67,13 @@ function RicherGameController:endGo()
 	self.stepHasGone = self.stepHasGone + 1
 	if self.stepHasGone >= #self.currentPath then
 		self.player.isMyTurn = false
-		self:handlePropEvent()
-		-- self:pickOnePlayerToGo()
+		-- self:handlePropEvent()
+		
+		local event = cc.EventCustom:new("MSG_BLOCK_WAY_EVENT")
+		event.player = self.player
+		cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
+
+
 		return
 	end
 	self:moveOneStep()
@@ -242,7 +248,6 @@ function RicherGameController:pickOnePlayerToGo()
 			local stepsCount = math.random(6)
 			local path = RouteNavigation:getPath(players[i], stepsCount, canPassGrid, tiledColsCount, tiledRowsCount)
 			players[i]:startGo(path)
-			-- print("pickOnePlayerToGo")
 			return
 		end
 	end
@@ -256,7 +261,8 @@ function RicherGameController:pickOnePlayerToGo()
 end
 
 function RicherGameController:registerNotificationObserver()
-
+	local evl = cc.EventListenerCustom:create("MSG_HANDLE_PROP_EVENT", handler(self, self.handlePropEvent) )
+    cc.Director:getInstance():getEventDispatcher():addEventListenerWithFixedPriority(evl,1)
 end
 
 return RicherGameController
