@@ -11,7 +11,7 @@ function RicherPlayer:ctor(params)
 	self.strength = params.strength
 	self.isMyTurn = params.turn
 	self:addPlayerAnimation()
-
+	self.restTimes = 0
 end
 
 function RicherPlayer:addPlayerAnimation()

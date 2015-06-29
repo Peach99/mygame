@@ -320,6 +320,9 @@ function GameBaseScene:registerNotificationObserver()
 	evl = cc.EventListenerCustom:create("MSG_BLOCK_WAY_EVENT", handler(self, self.receivedNotificationOMsg) )
     cc.Director:getInstance():getEventDispatcher():addEventListenerWithFixedPriority(evl,1)
 
+    evl = cc.EventListenerCustom:create("MSG_REST", handler(self, self.receivedNotificationOMsg) )
+    cc.Director:getInstance():getEventDispatcher():addEventListenerWithFixedPriority(evl, 1)
+
 end
 
 function GameBaseScene:initItemSprite()
@@ -339,7 +342,7 @@ function GameBaseScene:registerBlockWaySchedule()
 end
 
 function GameBaseScene:updateBlockWaySprites()
-	print("GameBaseScene:updateBlockWaySprites()")
+	-- print("GameBaseScene:updateBlockWaySprites()")
 	math.newrandomseed()
 	local randomNumber = math.random(#self.wayLayerPass_vector)
 	local x = self.wayLayerPass_vector[randomNumber].x
@@ -383,6 +386,10 @@ function GameBaseScene:receivedNotificationOMsg(event)
 
 	elseif event:getEventName() == "MSG_BLOCK_WAY_EVENT" then
 		self:doBlockWayEvent(event.player)
+
+	elseif event:getEventName() == "MSG_REST" then
+		event.player.isMyTurn = false
+		RicherGameController:pickOnePlayerToGo()
 	end
 end
 
@@ -452,9 +459,8 @@ function GameBaseScene:payTolls(payTag, x, y, player)
 			local toast2 = Toast:create("+".. money, 0.6, players[2]:getPositionX() , players[2]:getPositionY())
 			self:addChild(toast2)
 			toast2:play()
-
 		elseif player.name == "player2" then
-			local toast2 = Toast:create("+".. money, 0.6, players[1]:getPositionX() , players[2]:getPositionY())
+			local toast2 = Toast:create("+".. money, 0.6, players[1]:getPositionX() , players[1]:getPositionY())
 			self:addChild(toast2)
 			toast2:play()
 		end
@@ -496,6 +502,10 @@ function GameBaseScene:buyLand(buyTag, x, y, landSprite, landlevel, player, part
 									   	landLayer:setTileGID(landlevel,cc.p(col,row))
 									   	end), null)
 	landSprite:runAction(actions)
+
+	if player.name == "player1" then
+		player.restTimes = 2
+	end
 	
 end
 
@@ -527,14 +537,24 @@ function GameBaseScene:doRandomAskEvent(player)
 end
 
 function GameBaseScene:doBlockWayEvent(player)
-	print("GameBaseScene:doBlockWayEvent()")
+	
+	local x = self.Item_crab:getPositionX() + tiledWidth/2
+	local y = self.Item_crab:getPositionY() + tiledHeight/2
+
+	print("GameBaseScene:doBlockWayEvent()" .. x .. y)
+	if cc.rectContainsPoint(player:getBoundingBox(), cc.p(x,y) ) then
+		print("cc.rectContainsPoint(player:getBoundingBox(), cc.p(self.Item_crab:getPosition()) )")
+		RicherGameController:pickOnePlayerToGo()
+
+	else
+		local event = cc.EventCustom:new("MSG_HANDLE_PROP_EVENT")
+		cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
+	end
+	
 
 
 
 
-
-	local event = cc.EventCustom:new("MSG_HANDLE_PROP_EVENT")
-	cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
 end
 
 function GameBaseScene:displayArea()

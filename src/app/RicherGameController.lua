@@ -176,7 +176,10 @@ function RicherGameController:aroundLandEvent()
 				end
 
 			elseif spGid == player1_building_3_tiledID then
-				if self.player.name == "player2" then
+				if self.player.name == "player1" then
+					self:pickOnePlayerToGo()
+					return
+				elseif self.player.name == "player2" then
 					local event = cc.EventCustom:new("MSG_PAY_TOLLS")
 					event.x , event.y= sp:getPosition()
 					event.player = self.player
@@ -231,9 +234,11 @@ function RicherGameController:aroundLandEvent()
 					cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
 					self:pickOnePlayerToGo()
 					return
+				elseif self.player.name == "player2" then
+					self:pickOnePlayerToGo()
+					return
 				end
 			end	
-
 		end
 	end
 end
@@ -244,20 +249,43 @@ function RicherGameController:pickOnePlayerToGo()
 	-- print("···........."..tiledColsCount..tiledRowsCount)
 	for i=1,#players do
 		if players[i].isMyTurn == true then
-			math.newrandomseed()
-			local stepsCount = math.random(6)
-			local path = RouteNavigation:getPath(players[i], stepsCount, canPassGrid, tiledColsCount, tiledRowsCount)
-			players[i]:startGo(path)
-			return
+
+			if players[i].restTimes == 0 then
+				if players[i].name == "player1" then
+					local event = cc.EventCustom:new("MSG_GO_SHOW_TAG")
+					cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
+					return
+				end
+				math.newrandomseed()
+				local stepsCount = math.random(6)
+				local path = RouteNavigation:getPath(players[i], stepsCount, canPassGrid, tiledColsCount, tiledRowsCount)
+				players[i]:startGo(path)
+				return
+			elseif players[i].restTimes > 0 then
+				local event = cc.EventCustom:new("MSG_REST")
+				event.player = players[i]
+				cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
+				players[i].restTimes = players[i].restTimes - 1
+				return
+			end
+
 		end
 	end
 
+	-- for i=1,#players do
+	-- 	players[i].isMyTurn = true
+	-- end
+	self:resetPlayerGoTurn()
+
+	-- local event = cc.EventCustom:new("MSG_GO_SHOW_TAG")
+	-- cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
+end
+
+function RicherGameController:resetPlayerGoTurn()
 	for i=1,#players do
 		players[i].isMyTurn = true
 	end
-
-	local event = cc.EventCustom:new("MSG_GO_SHOW_TAG")
-	cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
+	self:pickOnePlayerToGo()
 end
 
 function RicherGameController:registerNotificationObserver()
