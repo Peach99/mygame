@@ -10,6 +10,8 @@ local Toast = import("app.Toast")
 
 local Item_crab = import("app.Item_crab")
 
+local Item_emergency = import("app.Item_emergency")
+
 local GameBaseScene = class("GameBaseScene", function(name)
 	-- print(name)
 	return display.newScene(name)
@@ -334,6 +336,12 @@ function GameBaseScene:initItemSprite()
 	local repeate = cc.RepeatForever:create(moveAnimate)
 
 	self.Item_crab:runAction(repeate)
+
+	self.Item_emergency = Item_emergency.new()
+	self.Item_emergency:setAnchorPoint(0,0)
+	self.Item_emergency:setVisible(false)
+	self:addChild(self.Item_emergency)
+
 	self:updateBlockWaySprites()
 end
 
@@ -503,9 +511,25 @@ function GameBaseScene:buyLand(buyTag, x, y, landSprite, landlevel, player, part
 									   	end), null)
 	landSprite:runAction(actions)
 
-	if player.name == "player1" then
-		player.restTimes = 2
-	end
+	-- if player.name == "player1" then
+	-- 	player.restTimes = 2
+	-- end
+		self.Item_emergency:setPosition(700, y)
+		self.Item_emergency:setVisible(true)
+
+		local emergencyGo = cca.animate(display.getAnimationCache("car_go_animation"))
+		local emergencyStop = cca.animate(display.getAnimationCache("car_stop_animation"))
+
+		local move1 = cca.moveTo(1, x, y)
+		local repeat1 = cca.rep(emergencyGo, 1)
+		local moveStep1 = cca.spawn(move1, repeat1,null)
+
+		local move2 = cca.moveTo(1, -60, y)
+		local repeat2 = cca.rep(emergencyStop, 1)
+		local moveStep2 = cca.spawn(move2, repeat2, null)
+
+		local actions = cc.Sequence:create(moveStep1 , moveStep2, null)
+		self.Item_emergency:runAction(actions)
 	
 end
 
@@ -544,17 +568,32 @@ function GameBaseScene:doBlockWayEvent(player)
 	print("GameBaseScene:doBlockWayEvent()" .. x .. y)
 	if cc.rectContainsPoint(player:getBoundingBox(), cc.p(x,y) ) then
 		print("cc.rectContainsPoint(player:getBoundingBox(), cc.p(self.Item_crab:getPosition()) )")
-		RicherGameController:pickOnePlayerToGo()
+		player.restTimes = 2
 
+		self.Item_emergency:setVisible(true)
+
+		local emergencyGo = cca.animate(display.getAnimationCache("car_go_animation"))
+		local emergencyStop = cca.animate(display.getAnimationCache("car_stop_animation"))
+
+		local move1 = cca.moveTo(1, player.x, player.y)
+		local repeat1 = cca.rep(emergencyGo, 5)
+		local moveStep1 = cca.spawn(move1, repeat1)
+
+		local move2 = cca.moveTo(1, -60, player.y)
+		local repeat2 = cca.rep(emergencyGo, 5)
+		local moveStep2 = cca.spawn(move2, repeat2)
+
+		self.Item_emergency:runAction(cca.seq(moveStep1, moveStep2, null))
+
+
+
+
+		RicherGameController:pickOnePlayerToGo()
 	else
 		local event = cc.EventCustom:new("MSG_HANDLE_PROP_EVENT")
 		cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
 	end
 	
-
-
-
-
 end
 
 function GameBaseScene:displayArea()

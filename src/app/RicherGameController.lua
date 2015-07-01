@@ -73,7 +73,6 @@ function RicherGameController:endGo()
 		event.player = self.player
 		cc.Director:getInstance():getEventDispatcher():dispatchEvent(event)
 
-
 		return
 	end
 	self:moveOneStep()
